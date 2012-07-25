@@ -77,7 +77,7 @@ classdef DirectSolver < handle
                            ' +t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/2;',...
                            'M$1(#1,#1)+=sym(e(:,i,j,:,i,j,k).m(k));' ], ...
                            ds.mim, ds.mfu, ds.mfd, ds.mVec );
-            ds.Bp = -gf_asm( 'volumic', ...
+            ds.Bp = gf_asm( 'volumic', ...
                             'M(#1,#2)+=comp(vGrad(#1).Base(#2))(:,i,i,:)', ...
                             mim, mfu, mfp );
 
@@ -102,7 +102,7 @@ classdef DirectSolver < handle
             end
 
 
-            ds.Kp = [ds.Ap, ds.Bp; ds.Bp', ds.C];
+            ds.Kp = [ds.Ap, ds.Bp; -ds.Bp', ds.C];
             
             ds.dof = gf_mesh_fem_get(mfd,  'nbdof');
             ds.udof = gf_mesh_fem_get(mfu, 'nbdof');

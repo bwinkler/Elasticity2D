@@ -33,6 +33,9 @@ classdef MOLSObjective < handle
             u = ds.Q' * up;
             z = ds.Q' * zp;
 
+            
+            pu = U( (ds.udof + 1): size(U,1));
+            pz = obj.Z( (ds.udof + 1):size(U,1));
 
             % BV Regularization
             
@@ -58,7 +61,15 @@ classdef MOLSObjective < handle
             % end 
 
 
-            Fa = 0.5 * (u - z)' * ds.A * (u - z);
+            % First trilinear form
+            % Fa = 0.5 * ( (up - zp)' * ds.Ap * (up - zp)... 
+            %              + (pu - pz)' * ds.C * (pu-pz) );
+
+            % Second trilinear form
+            Fa = 0.5 * ( (up - zp)' * ds.Ap * (up - zp)... 
+                          - (pu - pz)' * ds.C * (pu-pz) ) ...
+                          + (up -zp)' * ds.Bp * (pu-pz);
+
 
             % Tikhonov Regularization
             Fa = Fa + 0.5 * obj.eps * A' * ds.R * A;
@@ -74,9 +85,11 @@ classdef MOLSObjective < handle
                 Ga(i) = -0.5 * (up + zp)' * obj.Kphi{i} * (up - zp);
               end
             else
-              % Adjoint-Stiffness Gradient
-              L = ds.Q' * ds.getAdjointStiffness(up + zp); 
-              Ga = -0.5* L' * (u - z);
+              % Adjoint-Stiffness Gradient 
+              
+              % Second trilinear form
+              L = ds.getAdjointStiffness(up + zp); 
+              Ga = -0.5* L' * (up - zp);
             end
 
             % Tikhonov Regularization
