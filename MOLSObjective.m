@@ -4,15 +4,20 @@ classdef MOLSObjective < handle
         Z
         Kphi
         eps = 1E-6; 
-        args
+        gradMeth
     end
 
     methods
-        function obj = MOLSObjective( ds, Z, eps)
+        function obj = MOLSObjective( ds, Z, eps, gradMeth)
             obj.ds = ds;
             obj.Z = Z;
             obj.eps = eps;
-            %obj.Kphi = ds.getKphi();
+            obj.gradMeth = gradMeth;
+
+            if strcmp(gradMeth, 'Classical')
+              obj.Kphi = ds.getKphi();
+            end
+
         end
 
         function [Fa, Ga] = evaluate(obj, A)
@@ -21,16 +26,13 @@ classdef MOLSObjective < handle
             ds.setParam( A );
 
             U = ds.solve();
-            u = U(1:ds.udof);
-            z = obj.Z(1:ds.udof);
-
-            L = ds.Q' * ds.getAdjointStiffness(u + z); 
-
-            u = ds.Q' * u;
-            z = ds.Q' * z;
+            up = U(1:ds.udof);
+            zp = obj.Z(1:ds.udof);
 
 
-            %norm( L*A - ds.Ap * (u + z) )
+            u = ds.Q' * up;
+            z = ds.Q' * zp;
+
 
             % BV Regularization
             
@@ -57,7 +59,6 @@ classdef MOLSObjective < handle
 
 
             Fa = 0.5 * (u - z)' * ds.A * (u - z);
-            %Fa = 0.5 * (U - obj.Z)' * ds.Kp * (U - obj.Z);
 
             % Tikhonov Regularization
             Fa = Fa + 0.5 * obj.eps * A' * ds.R * A;
@@ -65,18 +66,18 @@ classdef MOLSObjective < handle
             % BV
             %Fa = Fa + obj.eps * fx;
 
-            %size(L')
+            if strcmp(obj.gradMeth, 'Classical')
+              % Classical gradient
+              Ga = zeros(ds.dof, 1);
 
-            % Adjoint-Stiffness Gradient
-            Ga = -0.5* L' * (u - z);
-
-            % Classical gradient
-            %Ga = zeros(ds.dof, 1);
-
-            %for i = [1:ds.dof]
-              %Ga(i) = -0.5 * (u + z)' * obj.Kphi{i} * (u - z);
-            %  Ga(i) = -0.5 * (U + obj.Z)' * obj.Kphi{i} * (U - obj.Z);
-            %end
+              for i = [1:ds.dof]
+                Ga(i) = -0.5 * (up + zp)' * obj.Kphi{i} * (up - zp);
+              end
+            else
+              % Adjoint-Stiffness Gradient
+              L = ds.Q' * ds.getAdjointStiffness(up + zp); 
+              Ga = -0.5* L' * (u - z);
+            end
 
             % Tikhonov Regularization
             Ga = Ga +  obj.eps *  ds.R * A;

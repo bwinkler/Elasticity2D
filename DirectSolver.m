@@ -120,29 +120,11 @@ classdef DirectSolver < handle
 
             G = zeros(size(ds.B,2), 1);
 
-            %O = zeros(size(ds.B,2));
-
-            %ds.K = [ds.A, ds.B; ds.B', O];
             ds.K = [ds.A, ds.B; ds.B', ds.C];
             ds.F = [Ft; G];
 
             ds.Mp = gf_asm('mass_matrix', mim, mfu);
-            %Mp = gf_asm('mass_matrix', mim, mfp);
-
-            %Mu = gf_asm( 'volumic', ...
-            %              ['ld=data$1(#2);', ...
-            %                'M(#1,#1)+=comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,i,j).ld(j)'], ...
-            %               mim, mfu, mfd, gf_mesh_fem_get(mfd, 'eval', ldInv ));
-
             ds.M = ds.Q' * ds.Mp * ds.Q;
-
-
-
-            %m = size(Mu,1);
-            %n = size(Mp,1);
-
-           %ds.M = [ Mu, zeros(m,n); zeros(n,m), Mp ];
-           %ds.M = ds.Q' * Mu * ds.Q;
 
             if strcmp(reg, 'L2') 
               ds.R = gf_asm( 'mass_matrix', ds.mim, ds.mfd );
@@ -158,7 +140,6 @@ classdef DirectSolver < handle
           end
         function Ut = solve(ds)
           UP = ds.K \ ds.F;
-          %UP = (ds.K \ ( ds.Q' * (ds.Fp - ds.Kp * ds.U0')));
 
           %UP =gf_linsolve('superlu', ds.K, ds.F );
 
@@ -184,7 +165,6 @@ classdef DirectSolver < handle
 
 
 
-%          O = zeros(size(ds.B,2));
           ds.A = ds.Q' * ds.Ap * ds.Q;
           ds.K = [ ds.A, ds.B; ds.B', ds.C ];
           ds.Kp = [ds.Ap, ds.Bp; ds.Bp', ds.C ];
@@ -205,27 +185,20 @@ classdef DirectSolver < handle
                       ' +t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/2;',...
                       'M$1(#1,#1)+=sym(e(:,i,j,:,i,j,k).m(k));' ], ...
                       ds.mim, ds.mfu, ds.mfd, phi );
-              Kphi{i} = [Aphi, ds.Bp; ds.Bp', ds.C];
-              %Kphi{i} = Aphi;
+              %Kphi{i} = [Aphi, ds.Bp; ds.Bp', ds.C];
+              Kphi{i} = Aphi;
           end
         end
 
         function L = getAdjointStiffness( ds, U )
 
-          % mf1 = gf_mesh_fem('partial', ds.mfu, setdiff( gf_mesh_fem_get(ds.mfu, 'basic dof from cvid'),... 
-          %                   gf_mesh_fem_get(ds.mfu, 'basic dof on region', [ds.dirBoundID])));
-          
-          % L = gf_asm('volumic',['u=data(#2);',...
-          %                      't=comp(vGrad(#2).vGrad(#2).Base(#1));',...
-          %                      'e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/2;',...
-          %                      'g=e(:,i,j,:,i,j,:);M(#2,#1)+=g(j,:,:).u(j)'],...
-          %                      ds.mim, ds.mfd, mf1, U);
-
-          L = gf_asm('volumic',['u=data(#2);',...
-                               't=comp(vGrad(#2).vGrad(#2).Base(#1));',...
-                               'e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/2;',...
-                               'g=e(:,i,j,:,i,j,:);M(#2,#1)+=g(j,:,:).u(j)'],...
-                               ds.mim, ds.mfd, ds.mfu, U);
+          L = gf_asm('volumic',[ ...
+                     'u=data(#2);',...
+                     't=comp(vGrad(#2).vGrad(#2).Base(#1));',...
+                     'e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}',...
+                     '+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/2;',...
+                     'g=e(:,i,j,:,i,j,:);M(#2,#1)+=g(j,:,:).u(j)'],...
+                     ds.mim, ds.mfd, ds.mfu, U);
 
         end
 
