@@ -14,7 +14,7 @@ classdef OLSObjective < handle
             obj.eps = eps;
             obj.gradMeth = gradMeth;
             if strcmp(gradMeth, 'Classical')
-              %error('OLS classical gradient non-functional')
+              error('OLS classical gradient non-functional')
               obj.Kphi = ds.getKphi();
             end
         end
@@ -31,21 +31,28 @@ classdef OLSObjective < handle
             
             u = ds.Q' * up;
             z = ds.Q' * zp;
+            pu = U( (ds.udof + 1): size(U,1));
+            pz = obj.Z( (ds.udof + 1):size(U,1));
 
-            Fa = 0.5 * ( u - z )' * ds.M * (u - z);
+
+            %Fa = 0.5 * ( u - z )' * ds.M * (u - z);
+            Fa = 0.5 * ( (up - zp)' * ds.Mp * (up - zp)... 
+                          - (pu - pz)' * ds.C * (pu-pz) ) ...
+                          + (up -zp)' * ds.Bp * (pu-pz);
+
             Fa = Fa + 0.5 * obj.eps * A' * ds.R * A;
 
             if strcmp(obj.gradMeth, 'Classical')
               Ga = zeros(ds.dof, 1);
                for i = [1:ds.dof]
-                du = inv(ds.A) *  -( (ds.Q'*obj.Kphi{i}*ds.Q)  * u);
+                du = ds.A /  -(( ds.Q'*obj.Kphi{i}*ds.Q)  * u);
                 Ga(i) = du'  * ds.M * (u-z);
               end
             else
               L = ds.Q' * ds.getAdjointStiffness( up );
-              Ga = -L' * inv( ds.A ) * ds.M * (u - z);
+              Ga = -0.5*L' *  (ds.A \  (ds.M * (u - z)));
             end
-            Ga = Ga + obj.eps *  ds.R * A;
+            Ga = Ga + 0.5* obj.eps *  ds.R * A;
         end
     end
 end

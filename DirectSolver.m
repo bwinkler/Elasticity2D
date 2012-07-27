@@ -33,12 +33,13 @@ classdef DirectSolver < handle
         Ap
         Fp
         Fn
+        regType    % Regularization type        
     end
     methods
         function ds = DirectSolver( mesh, mu, ld, fx, fy, mfu, mfd, mfp, mim,... 
                                     dirBoundID, dirBound_x, dirBound_y,...
                                     neuBoundID, neuBound_x, neuBound_y, ...
-                                    reg )
+                                    regType )
 
             % Solves the direct incompressible problem on a 2D cartesian mesh
             %
@@ -60,6 +61,8 @@ classdef DirectSolver < handle
             ds.mfp = mfp;
 
             ds.mim = mim;
+
+            ds.regType = regType;
 
             ds.mVec = gf_mesh_fem_get(mfd, 'eval', {mu} );
             ds.fVec = gf_mesh_fem_get(mfd, 'eval', {fx;fy});
@@ -126,15 +129,21 @@ classdef DirectSolver < handle
             ds.Mp = gf_asm('mass_matrix', mim, mfu);
             ds.M = ds.Q' * ds.Mp * ds.Q;
 
-            if strcmp(reg, 'L2') 
+
+            switch ds.regType
+            case 'L2'
               ds.R = gf_asm( 'mass_matrix', ds.mim, ds.mfd );
-            elseif strcmp(reg,'H1')
+            case 'H1'
               ds.R = gf_asm( 'laplacian', ds.mim, ds.mfd, ds.mfd,...
                     gf_mesh_fem_get(mfd, 'eval', {1} ));
-            else
+            case 'H1Semi'
               ds.R = gf_asm( 'mass_matrix', ds.mim, ds.mfd )...
                       + gf_asm( 'laplacian', ds.mim, ds.mfd, ds.mfd,...
                       gf_mesh_fem_get(mfd, 'eval', {1} ));
+            case 'BV'
+              ...
+            otherwise
+              error('Invalid regularization type.');
             end
 
           end

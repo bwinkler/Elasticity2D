@@ -5,6 +5,7 @@ classdef MOLSObjective < handle
         Kphi
         eps = 1E-6; 
         gradMeth
+        edges
     end
 
     methods
@@ -14,8 +15,12 @@ classdef MOLSObjective < handle
             obj.eps = eps;
             obj.gradMeth = gradMeth;
 
+            % These both should likely be move to DirectSolver
             if strcmp(gradMeth, 'Classical')
               obj.Kphi = ds.getKphi();
+            end
+            if strcmp(ds.regType, 'BV')
+              obj.edges = gf_mesh_get(ds.mesh, 'edges', 'merge'); 
             end
 
         end
@@ -37,28 +42,6 @@ classdef MOLSObjective < handle
             pu = U( (ds.udof + 1): size(U,1));
             pz = obj.Z( (ds.udof + 1):size(U,1));
 
-            % BV Regularization
-            
-            % e = 0.00001;
-            % E = gf_mesh_get(ds.mesh, 'edges', 'merge');
-
-            % fx = 0;
-            % gx = zeros(size(A));
-
-            % for i = [ 1:size(E,2) ]
-            %   pid1 = E(1,i);
-            %   pid2 = E(2,i);
-            %   x = A(pid1) - A(pid2);
-            %   p1 = gf_mesh_fem_get(ds.mfd, 'basic dof nodes', pid1);
-            %   p2 = gf_mesh_fem_get(ds.mfd, 'basic dof nodes', pid2);
-            %   len = norm( p1 - p2 );
-            %   f = sqrt( x^2 + e ) * len;
-            %   df =  x / f;
-            %   %df=(x.^3+2*e*x)./ ( x^2 + e ) .^(1.5);
-            %   fx = fx + f;
-            %   gx(pid1) = gx(pid1) + df * len;
-            %   gx(pid2) = gx(pid2) - df * len;
-            % end 
 
 
             % First trilinear form
@@ -72,7 +55,9 @@ classdef MOLSObjective < handle
 
 
             % Tikhonov Regularization
-            Fa = Fa + 0.5 * obj.eps * A' * ds.R * A;
+            %Fa = Fa + 0.5 * obj.eps * A' * ds.R * A;
+            
+            %[fx, gx] = BVreg(ds, A, 0.00001, obj.edges); 
             
             % BV
             %Fa = Fa + obj.eps * fx;
@@ -92,8 +77,16 @@ classdef MOLSObjective < handle
               Ga = -0.5* L' * (up - zp);
             end
 
-            % Tikhonov Regularization
-            Ga = Ga +  obj.eps *  ds.R * A;
+            if strcmp(ds.regType, 'BV')
+              % Use BV regularization.
+              [fx, gx] = BVreg(ds, A, 0.00001, obj.edges);
+              Fa = Fa + obj.eps * fx;
+              Ga = Ga + obj.eps * gx;
+            else
+              % Use smooth regularization.
+              Ga = Ga + obj.eps *  ds.R * A;
+              Fa = Fa + 0.5 * obj.eps * A' * ds.R * A;
+            end
 
             % BV
             %Ga = Ga + obj.eps * gx;
