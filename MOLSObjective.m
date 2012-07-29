@@ -42,8 +42,6 @@ classdef MOLSObjective < handle
             pu = U( (ds.udof + 1): size(U,1));
             pz = obj.Z( (ds.udof + 1):size(U,1));
 
-
-
             % First trilinear form
             % Fa = 0.5 * ( (up - zp)' * ds.Ap * (up - zp)... 
             %              + (pu - pz)' * ds.C * (pu-pz) );
@@ -53,14 +51,6 @@ classdef MOLSObjective < handle
                           - (pu - pz)' * ds.C * (pu-pz) ) ...
                           + (up -zp)' * ds.Bp * (pu-pz);
 
-
-            % Tikhonov Regularization
-            %Fa = Fa + 0.5 * obj.eps * A' * ds.R * A;
-            
-            %[fx, gx] = BVreg(ds, A, 0.00001, obj.edges); 
-            
-            % BV
-            %Fa = Fa + obj.eps * fx;
 
             if strcmp(obj.gradMeth, 'Classical')
               % Classical gradient
@@ -87,9 +77,6 @@ classdef MOLSObjective < handle
               Ga = Ga + obj.eps *  ds.R * A;
               Fa = Fa + 0.5 * obj.eps * A' * ds.R * A;
             end
-
-            % BV
-            %Ga = Ga + obj.eps * gx;
             
         end
     end

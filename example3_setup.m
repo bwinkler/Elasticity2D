@@ -6,23 +6,23 @@ warning off;
 n = 50;
 h = 1/(n+1);
 m = gf_mesh('cartesian', [0:h:1], [0:h:1] );
-%gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
 
-% Assign boundary regions
-TOP = 1;
-REST = 2;
-BORDER = 3;
-border = gf_mesh_get(m, 'outer faces');
 
 pts = gf_mesh_get(m,'pts');
-pidtop = find( abs(pts(2,:) - 1 ) < 1/(2*(n+1)));
-top = gf_mesh_get(m, 'faces_from_pid', pidtop);
+pidleft = find( abs(pts(1,:) ) < 1/(2*(n+1)) );
+pidright = find( abs(pts(1,:) - 1 ) < 1/(2*(n+1)) );
+pidbottom = find( abs(pts(2,:) ) < 1/(2*(n+1)) );
+pidtop = find( abs(pts(2,:) - 1 ) < 1/(2*(n+1)) );
 
-rest = setdiff(border', top', 'rows')';
+dirBoundFaces = gf_mesh_get(m, 'faces_from_pid', union( pidleft, pidbottom) );
+neuBoundFaces = gf_mesh_get(m, 'faces_from_pid', union( pidright, pidtop) );
 
-gf_mesh_set(m, 'boundary', TOP, top);
-gf_mesh_set(m, 'boundary', REST, rest);
-gf_mesh_set(m, 'boundary', BORDER, border);
+dirBoundID = 1;
+neuBoundID = 2;
+
+gf_mesh_set(m, 'boundary', dirBoundID, dirBoundFaces);
+gf_mesh_set(m, 'boundary', neuBoundID, neuBoundFaces);
+
 
 mfu = gf_mesh_fem(m,2);
 gf_mesh_fem_set(mfu, 'fem', gf_fem('FEM_QK(2,1)'));
@@ -39,20 +39,25 @@ mu = '1+x.*y.*sin(pi*x).*sin(pi*y)';
 
 ld = 1E6;
 
-%mu = '2+x.^2+y.^2';
-fx = '2+sin(2*pi*x)';
-fy = '2+0.1*y';
+f2 = 'cos(pi*x)';
+f1 = '-0.2*x';
 
-dirBoundx = 'sin(x)';
-dirBoundy = '0';
+% dirBound1 = '-0.01*sin(pi*y)';
+% dirBound2 = '0.1*sin(x )';
 
-neuBoundx = '1';
-neuBoundy = '1';
+dirBound1 = '0.1*sin(pi*y)';
+dirBound2 = '0.1*sin(pi*x)';
+
+% dirBound1 = '0';
+% dirBound2 = '0';
+
+neuBound1 = '0.1+x';
+neuBound2 = '0.1+y';
 
 tic
-ds = DirectSolver( m, mu, ld, fx, fy, mfu, mfd, mfp, mim,... 
-                   TOP, dirBoundx, dirBoundy, ...
-                   REST, neuBoundx, neuBoundy, ...
+ds = DirectSolver( m, mu, ld, f1, f2, mfu, mfd, mfp, mim,... 
+                   dirBoundID, dirBound1, dirBound2, ...
+                   neuBoundID, neuBound1, neuBound2, ...
                    'H1Semi');
 Zt = ds.solve();
 

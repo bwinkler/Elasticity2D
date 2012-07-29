@@ -3,27 +3,25 @@ gf_workspace('clear all');
 warning off;
 
 % Create the mesh
-n = 20;
+n = 50;
 h = 1/(n+1);
 m = gf_mesh('cartesian', [0:h:1], [0:h:1] );
-%gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
-
-% Assign boundary regions
-TOP = 1;
-REST = 2;
-BORDER = 3;
-border = gf_mesh_get(m, 'outer faces');
 
 pts = gf_mesh_get(m,'pts');
-pidtop = find( abs(pts(2,:) - 1 ) < 1/(2*(n+1)));
-top = gf_mesh_get(m, 'faces_from_pid', pidtop);
+pidleft = find( abs(pts(1,:) ) < 1/(2*(n+1)) );
+pidright = find( abs(pts(1,:) - 1 ) < 1/(2*(n+1)) );
+pidbottom = find( abs(pts(2,:) ) < 1/(2*(n+1)) );
+pidtop = find( abs(pts(2,:) - 1 ) < 1/(2*(n+1)) );
 
-rest = setdiff(border', top', 'rows')';
+dirBoundFaces = gf_mesh_get(m, 'faces_from_pid', union(pidleft, pidright) );
+neuBoundFaces = gf_mesh_get(m, 'faces_from_pid',...
+                  union( pidtop, pidbottom) );
 
-gf_mesh_set(m, 'boundary', TOP, top);
-gf_mesh_set(m, 'boundary', REST, rest);
-gf_mesh_set(m, 'boundary', BORDER, border);
-%gf_plot_mesh(m, 'regions', [TOP]);
+dirBoundID = 1;
+neuBoundID = 2;
+
+gf_mesh_set(m, 'boundary', dirBoundID, dirBoundFaces);
+gf_mesh_set(m, 'boundary', neuBoundID, neuBoundFaces);
 
 mfu = gf_mesh_fem(m,2);
 gf_mesh_fem_set(mfu, 'fem', gf_fem('FEM_QK(2,1)'));
@@ -43,26 +41,28 @@ ld = 1E6;
 % For totally incompressible case.
 %ld = 'Incompressible';
 
-f1 = '1+0.1*x';
-f2 = '1+0.1*y';
+f1 = '1.3+0.1*x';
+f2 = '1.3+0.1*y';
 
 
-dirBound1 = '0.1*x';
-dirBound2 = '0.1*y';
+dirBound1 = '0';
+dirBound2 = '0.1*x.*y.^2';
 
-neuBound1 = '1';
-neuBound2 = '1';
+neuBound1 = 'x.^2';
+neuBound2 = 'y.^2';
 
 
 disp('Starting direct solver...');
 tic
 ds = DirectSolver( m, mu, ld, f1, f2, mfu, mfd, mfp, mim, ...
-                   TOP, dirBound1, dirBound2, ...
-                   REST, neuBound1, neuBound2,...
+                   dirBoundID, dirBound1, dirBound2, ...
+                   neuBoundID, neuBound1, neuBound2,...
                    'H1Semi');
-Z = ds.solve();
+Zt = ds.solve();
 toc;
 
-zExact = Z(1:ds.udof);
-pExact = Z((ds.udof+1):length(Z));
+zExact = Zt(1:ds.udof);
+pExact = Zt(ds.udof + 1: length(Zt));
+
+Z = [ zExact; zeros(size(pExact))];
 

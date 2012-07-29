@@ -1,18 +1,22 @@
 example3_setup
 
-eps = 1E-6;
-A0 = gf_mesh_fem_get(mfd, 'eval', {1.2} );
+dispDisplacement(ds, zExact', 0.1);
+eps = 1E-8;
+A0 = gf_mesh_fem_get(mfd, 'eval', {1} );
 muExact = ds.mVec;
 
-tic
+profile on;
 is = InverseSolver( ds, A0', Z, eps, 'MOLS', 'Adjoint Stiffness');
-toc
 
 [muComp, hist, cost, muHist] = is.solve();
-toc
+
+profile off;
+
+profsave( profile('info'), mfilename() );
 
 disp( sprintf('\n%d optimization iterations\n ', size(muHist,1)) );
 
 dispMuComparison(ds, muExact, muComp');
 
-%print -zbuffer -r600 -dtiff example3.tiff
+printMuComparison(ds, muExact, muComp', mfilename(), [1, 1.4] );
+

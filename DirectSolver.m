@@ -98,14 +98,15 @@ classdef DirectSolver < handle
             else
 
               ldInv = ld^(-1);
-              ds.C = -gf_asm( 'volumic', ...
+              ds.C = gf_asm( 'volumic', ...
                           ['ld=data$1(#2);', ...
                             'M(#1,#1)+=comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,i,j).ld(j)'], ...
                             mim, mfp, mfd, gf_mesh_fem_get(mfd, 'eval', ldInv ));
             end
 
 
-            ds.Kp = [ds.Ap, ds.Bp; -ds.Bp', ds.C];
+            % Second trilinear form
+            ds.Kp = [ds.Ap, ds.Bp; ds.Bp', -ds.C];
             
             ds.dof = gf_mesh_fem_get(mfd,  'nbdof');
             ds.udof = gf_mesh_fem_get(mfu, 'nbdof');
@@ -123,7 +124,7 @@ classdef DirectSolver < handle
 
             G = zeros(size(ds.B,2), 1);
 
-            ds.K = [ds.A, ds.B; ds.B', ds.C];
+            ds.K = [ds.A, ds.B; ds.B', -ds.C];
             ds.F = [Ft; G];
 
             ds.Mp = gf_asm('mass_matrix', mim, mfu);
@@ -148,9 +149,9 @@ classdef DirectSolver < handle
 
           end
         function Ut = solve(ds)
-          UP = ds.K \ ds.F;
+          %UP = ds.K \ ds.F;
 
-          %UP =gf_linsolve('superlu', ds.K, ds.F );
+          UP =gf_linsolve('superlu', ds.K, ds.F );
 
           Ut = UP(1:size(ds.A,1), 1);
           P = UP((size(ds.A,1) + 1):size(UP,1));
@@ -168,15 +169,15 @@ classdef DirectSolver < handle
                            ' +t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/2;',...
                            'M$1(#1,#1)+=sym(e(:,i,j,:,i,j,k).m(k));' ], ...
                            ds.mim, ds.mfu, ds.mfd, ds.mVec );
-          [H, R] = gf_asm('dirichlet', ds.dirBoundID, ds.mim, ds.mfu, ds.mfd, ...
-                            repmat( eye(2), [1,1,ds.dof] ) , ds.dirVec );
-          [ds.Q, ds.U0] = gf_spmat_get(H, 'dirichlet_nullspace', R);
+          % [H, R] = gf_asm('dirichlet', ds.dirBoundID, ds.mim, ds.mfu, ds.mfd, ...
+          %                   repmat( eye(2), [1,1,ds.dof] ) , ds.dirVec );
+          % [ds.Q, ds.U0] = gf_spmat_get(H, 'dirichlet_nullspace', R);
 
 
 
           ds.A = ds.Q' * ds.Ap * ds.Q;
-          ds.K = [ ds.A, ds.B; ds.B', ds.C ];
-          ds.Kp = [ds.Ap, ds.Bp; ds.Bp', ds.C ];
+          ds.K = [ ds.A, ds.B; ds.B', -ds.C ];
+          ds.Kp = [ds.Ap, ds.Bp; ds.Bp', -ds.C ];
           G = zeros(size(ds.B,2), 1);
           Ft = ds.Q' * ( (ds.Fp + ds.Fn) - ds.Ap * ds.U0');
           ds.F = [Ft;G];
