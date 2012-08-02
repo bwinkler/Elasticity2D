@@ -2,7 +2,7 @@ clear all;
 gf_workspace('clear all');
 
 % Create the mesh
-n =50;
+n = 20;
 h = 1/(n+1);
 m = gf_mesh('cartesian', [0:h:1], [0:h:1] );
 %gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
@@ -33,7 +33,8 @@ gf_mesh_fem_set(mfd, 'fem', gf_fem('FEM_QK(2,1)'));
 mfp = gf_mesh_fem(m);
 gf_mesh_fem_set(mfp, 'fem', gf_fem('FEM_QK(2,0)'));
 
-mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,2)'));
+%mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,2)'));
+mim = gf_mesh_im(m, gf_integ('IM_QUAD(2)'));
 mu = '0.3 * ( x >=0.6 & x <= 0.8 & y >= 0.2 & y <=0.6) + 0.5 * ( x >= 0.2 & x <= 0.4 & y >=0.2 & y <= 0.4) + 0.2';
 
 %mu = '0.5 + ( y >= 0.5 )';
@@ -54,7 +55,7 @@ tic
 ds = DirectSolver( m, mu, ld, f1, f2, mfu, mfd, mfp, mim,... 
                    TOP, dirBound1, dirBound1, ...
                    REST, neuBound2, neuBound2, ...
-                   'BV');
+                   'H1');
 
 Zt = ds.solve();
 toc;
@@ -62,10 +63,9 @@ toc;
 zExact = Zt(1:ds.udof);
 pExact = Zt((ds.udof+1):length(Zt));
 
-Z = [ zExact; zeros(size(pExact))];
+pEst = estimateP( ds, zExact );
 
 
-
-
+Z = [ zExact; pEst ];
 
 

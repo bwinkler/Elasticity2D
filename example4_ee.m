@@ -1,4 +1,4 @@
-example1_setup
+example4_setup
 
 noisePercent = 0.001;
 
@@ -11,31 +11,32 @@ zNoise = ds.Q * zNoise + ds.U0';
 pEst = estimateP(ds, zNoise );
 
 Z = [zNoise; pEst];
-
 %dispDisplacement(ds, zExact', 0.01);
 
 %return 
 A0 = gf_mesh_fem_get(mfd, 'eval', {2.2} );
+
 muExact = ds.mVec;
+%A0 = muExact;
 
 %smooth
-%eps = 1E-8;
+%eps = 1E-5;
 
-% Noise 0.1%
-eps = 2.5E-4;
+% 0.1% noise
+eps = 9E-3;
 
 %BV
 %eps = 1E-9;
 
 disp('Starting inverse solver...');
-profile on;
-is = InverseSolver( ds, A0', Z, eps, 'MOLS', 'Adjoint Stiffness');
+%profile on;
+is = InverseSolver( ds, A0', Z, eps, 'EE', 'Adjoint Stiffness');
 [muComp, hist, cost, muHist] = is.solve();
-profile off;
+%profile off;
 
-profsave( profile('info'), mfilename() );
+%profsave( profile('info'), mfilename() );
 
-disp(sprintf('\n%d optimization iterations\n', size(hist,1) ));
+%disp(sprintf('\n%d optimization iterations\n', size(hist,1) ));
 
 dispMuComparison( ds, muExact, muComp');
 

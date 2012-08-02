@@ -13,9 +13,9 @@ pidright = find( abs(pts(1,:) - 1 ) < 1/(2*(n+1)) );
 pidbottom = find( abs(pts(2,:) ) < 1/(2*(n+1)) );
 pidtop = find( abs(pts(2,:) - 1 ) < 1/(2*(n+1)) );
 
-dirBoundFaces = gf_mesh_get(m, 'faces_from_pid', union(pidleft, pidright) );
+dirBoundFaces = gf_mesh_get(m, 'faces_from_pid', pidtop );
 neuBoundFaces = gf_mesh_get(m, 'faces_from_pid',...
-                  union( pidtop, pidbottom) );
+                  union( pidleft, union(pidright, pidbottom) ) );
 
 dirBoundID = 1;
 neuBoundID = 2;
@@ -35,7 +35,8 @@ gf_mesh_fem_set(mfp, 'fem', gf_fem('FEM_QK(2,0)'));
 %mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,2)'));
 mim = gf_mesh_im(m, gf_integ('IM_QUAD(2)'));
 
-mu = '2.5+0.25*sin(2*pi*x)';
+%mu = '2.5+0.25*sin(2*pi*x)';
+mu = '1+x.*y.*sin(pi*x).*sin(pi*y)';
 ld = 1E6;
 
 % For totally incompressible case.
@@ -45,11 +46,11 @@ f1 = '2.3+0.1*x';
 f2 = '2.3+0.1*y';
 
 
-dirBound1 = '0.1*x.^2.*y';
-dirBound2 = '0.1*x.*y.^2';
+dirBound1 = '0';
+dirBound2 = '0';
 
-neuBound1 = '0.5+x.^2';
-neuBound2 = '0.5+y.^2';
+neuBound1 = '1';
+neuBound2 = '1';
 
 
 disp('Starting direct solver...');
@@ -57,7 +58,16 @@ tic
 ds = DirectSolver( m, mu, ld, f1, f2, mfu, mfd, mfp, mim, ...
                    dirBoundID, dirBound1, dirBound2, ...
                    neuBoundID, neuBound1, neuBound2,...
-                   'H1');
+                   'H1Semi');
 Zt = ds.solve();
 toc;
 
+zExact = Zt(1:ds.udof);
+pExact = Zt(ds.udof + 1: length(Zt));
+
+pEst = estimateP( ds, zExact ); 
+
+%Z = [ zExact; zeros(size(pExact))];
+Z = [ zExact; pEst ];
+
+%Z = Zt;

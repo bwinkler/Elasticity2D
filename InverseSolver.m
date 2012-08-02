@@ -21,8 +21,8 @@ classdef InverseSolver < handle
                 is.obj = MOLSObjective( is.ds, is.Z, is.eps, gradMeth );
               case 'OLS'
                 is.obj = OLSObjective( is.ds, is.Z, is.eps, gradMeth );
-              % case 'EE'
-              %   is.obj = EEObjective( is.ds, is.Z, is.eps);
+              case 'EE'
+                 is.obj = EEObjective( is.ds, is.Z, is.eps);
               otherwise
                 error('Invalid objective function method specified');
             end
@@ -35,8 +35,9 @@ classdef InverseSolver < handle
 
             [As, hist, cost, Ahist] = cgtrust1(is.A0, f, [is.tol, 0.1, 500, 500]);
 
-            %[As, hist, cost] = gradproj(is.A0, f, 0.4 * ones(is.ds.dof,1),...
-            %                            0.1* ones(is.ds.dof, 1), is.tol, 1E5);
+            % [As, hist, cost] = gradproj(is.A0, f, 3 * ones(is.ds.dof,1),...
+            %                             2* ones(is.ds.dof, 1), is.tol, 1E5);
+            % Ahist = 0;
         end
     end
 
