@@ -36,7 +36,7 @@ gf_mesh_fem_set(mfp, 'fem', gf_fem('FEM_QK(2,0)'));
 mim = gf_mesh_im(m, gf_integ('IM_QUAD(2)'));
 
 mu = '2.5+0.25*sin(2*pi*x)';
-ld = 1E6;
+ld = 1E7;
 
 % For totally incompressible case.
 %ld = 'Incompressible';
@@ -45,8 +45,8 @@ f1 = '2.3+0.1*x';
 f2 = '2.3+0.1*y';
 
 
-dirBound1 = '0.1*x.^2.*y';
-dirBound2 = '0.1*x.*y.^2';
+dirBound1 = '0.01*x';
+dirBound2 = '0.01*y.^2';
 
 neuBound1 = '0.5+x.^2';
 neuBound2 = '0.5+y.^2';

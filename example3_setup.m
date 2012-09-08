@@ -3,7 +3,7 @@ gf_workspace('clear all');
 warning off;
 
 % Create the mesh
-n = 50;
+n = 20;
 h = 1/(n+1);
 m = gf_mesh('cartesian', [0:h:1], [0:h:1] );
 
@@ -65,8 +65,6 @@ toc;
 
 zExact = Zt(1:ds.udof);
 pExact = Zt(ds.udof + 1: length(Zt));
-
-Z = [ zExact; zeros(size(pExact))];
 
 
 % u1 = Ut(1:ds.udof);

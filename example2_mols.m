@@ -4,13 +4,13 @@ eps = 1E-6;
 A0 = gf_mesh_fem_get(mfd, 'eval', {0.15} );
 muExact = ds.mVec;
 
-profile on;
+%profile on;
 is = InverseSolver( ds, A0', Z, eps, 'MOLS', 'Adjoint Stiffness');
 [muComp, hist, cost, muHist] = is.solve();
-profile off;
+%profile off;
 
 
-profsave( profile('info'), mfilename() );
+%profsave( profile('info'), mfilename() );
 
 disp( sprintf('\n%d optimization iterations\n ', size(muHist,1)) );
 

@@ -6,5 +6,6 @@ function dispMuComparison(ds, muExact, muComp)
   subplot(1,2,2);
   gf_plot( ds.mfd, muComp,  'zplot', 'on', 'deformed_mesh', 'on', 'disp_options', 'off');
   title('Computed \mu');
-  disp( norm( muExact - muComp ) );
+  disp( sprintf('Error 2-norm: %f', norm( muExact - muComp ) ));
+  disp( sprintf('Error Inf-norm: %f', norm(muExact - muComp, Inf) ) );
 end

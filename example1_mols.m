@@ -1,39 +1,46 @@
 example1_setup
 
-noisePercent = 0.001;
+noisePercent = 0.01;
 
 zExact = Zt(1:ds.udof);
 pExact = Zt(ds.udof + 1: length(Zt));
 
-zNoise = addNoise( ds.Q' * zExact, noisePercent, 'uniform' );
+[zNoise, errNorm] = addNoise( ds.Q' * zExact, noisePercent, 'uniform' );
+
 zNoise = ds.Q * zNoise + ds.U0';
 
-pEst = estimateP(ds, zNoise );
 
-Z = [zNoise; pEst];
+% Use exact data
+pEst = estimateP(ds, zExact );
+Z = [zExact; pEst];
+eps = 1E-8;
 
-%dispDisplacement(ds, zExact', 0.01);
+% Use noise data directly
+% pEst = estimateP(ds, zNoise );
+% Z = [zNoise; pEst];
+%eps = 2E-4;
+
+% Use smoothed data
+% res = @(a)  errNorm^2 - norm( zNoise - smoothData1(zNoise, a, ds))^2;
+% alpha = secant(res, 2.6E-2, 3.7E-3, 1E-15, 1E-15, 100000000)
+% zSmooth = smoothData1( zNoise, alpha, ds );
+% pEst = estimateP(ds, zSmooth);
+% Z = [zSmooth; pEst];
+%norm( zExact - zSmooth)
+%dispDisplacementComparison( ds, zNoise', zSmooth', 1);
+%eps = 2E-3;
 
 %return 
-A0 = gf_mesh_fem_get(mfd, 'eval', {2.2} );
+A0 = gf_mesh_fem_get(mfd, 'eval', {1} );
 muExact = ds.mVec;
 
-%smooth
-%eps = 1E-8;
-
-% Noise 0.1%
-eps = 2.5E-4;
-
-%BV
-%eps = 1E-9;
-
 disp('Starting inverse solver...');
-profile on;
+%profile on;
 is = InverseSolver( ds, A0', Z, eps, 'MOLS', 'Adjoint Stiffness');
 [muComp, hist, cost, muHist] = is.solve();
-profile off;
+%profile off;
 
-profsave( profile('info'), mfilename() );
+%profsave( profile('info'), mfilename() );
 
 disp(sprintf('\n%d optimization iterations\n', size(hist,1) ));
 

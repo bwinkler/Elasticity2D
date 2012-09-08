@@ -1,7 +1,8 @@
-function ud = addNoise( u, noisePercent, type )
+function [ud, err_norm] = addNoise( u, noisePercent, type )
 
-  u1 = u(1:2:end);
-  u2 = u(2:2:end);
+  % u1 = u(1:2:end);
+  % u2 = u(2:2:end);
+  [u1, u2] = splitVector(u);
 
   % unorms = zeros(size(u1));
   % for i = [1:size(u1)]
@@ -20,7 +21,7 @@ function ud = addNoise( u, noisePercent, type )
   a = -noisePercent * max( u1 );
   b = -a;
   r = (a + (b-a) .* rand(size(u1)));
-  ud1 = u1 + r;
+  ud1 = u1 + 0;
   
 
   a = -noisePercent * max( u2);
@@ -29,10 +30,13 @@ function ud = addNoise( u, noisePercent, type )
 
   ud2 = u2 + r;
 
-  ud = [];
-  for i = [1:size(ud1)]
-    ud = [ ud; ud1(i); ud2(i) ];
-  end
+  ud = mergeVectors(ud1, ud2);
+
+  err_norm = norm(u - ud);
+  % ud = [];
+  % for i = [1:size(ud1)]
+  %   ud = [ ud; ud1(i); ud2(i) ];
+  % end
 end
 
   
