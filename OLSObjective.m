@@ -5,6 +5,8 @@ classdef OLSObjective < handle
         Kphi
         eps = 1E-6; 
         gradMeth
+        M
+        Mp
     end
 
     methods
@@ -17,6 +19,9 @@ classdef OLSObjective < handle
               error('OLS classical gradient non-functional')
               obj.Kphi = ds.getKphi();
             end
+            obj.M = ds.M
+            obj.Mp =  gf_asm('mass_matrix', ds.mim, ds.mfp);
+
         end
 
         function [Fa, Ga] = evaluate(obj, A)
@@ -36,9 +41,11 @@ classdef OLSObjective < handle
 
 
             %Fa = 0.5 * ( u - z )' * ds.M * (u - z);
-            Fa = 0.5 * ( (up - zp)' * ds.Mp * (up - zp)... 
-                          - (pu - pz)' * ds.C * (pu-pz) ) ...
-                          + (up -zp)' * ds.Bp * (pu-pz);
+            % Fa = 0.5 * ( (up - zp)' * ds.Mp * (up - zp)... 
+            %               - (pu - pz)' * ds.C * (pu-pz) ) ...
+            %               + (up -zp)' * ds.Bp * (pu-pz);
+            Fa = 0.5 * ( (u - z)' * obj.M * (u - z) + (pu-pz)' * obj.Mp * (pu-pz));
+            
 
             Fa = Fa + 0.5 * obj.eps * A' * ds.R * A;
 
