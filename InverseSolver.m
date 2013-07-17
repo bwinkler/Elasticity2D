@@ -35,7 +35,10 @@ classdef InverseSolver < handle
         function [As, hist, cost, Ahist] = solve(is)
             f = @(A) is.obj.evaluate(A);
 
-            CheckGrad( f, is.A0, 8 );
+            disp('Checking gradient...');
+            CheckGrad(f, is.A0, 5);
+            disp('Checking hessian...');
+            CheckHess(f, is.A0, 10);
 
             [As, hist, cost, Ahist] = cgtrust1(is.A0, f, [is.tol, 0.1, 500, 500]);
 

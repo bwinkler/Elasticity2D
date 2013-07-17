@@ -1,9 +1,9 @@
-%clear all;
+clear all;
 gf_workspace('clear all');
-%warning off;
+warning off;
 
 % Create the mesh
-n = 100; 
+n = 20; 
 h = 1/(n+1);
 
 
