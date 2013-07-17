@@ -18,7 +18,11 @@ classdef InverseSolver < handle
 
             switch objMeth
               case 'MOLS'              
-                is.obj = MOLSObjective( is.ds, is.Z, is.eps, gradMeth );
+                is.obj = MOLSObjectiveJ2( is.ds, is.Z, is.eps, gradMeth );
+              case 'MOLSJ2'              
+                is.obj = MOLSObjectiveJ2( is.ds, is.Z, is.eps, gradMeth );
+              case 'MOLSJ1'
+                is.obj = MOLSObjectiveJ1( is.ds, is.Z, is.eps, gradMeth);
               case 'OLS'
                 is.obj = OLSObjective( is.ds, is.Z, is.eps, gradMeth );
               case 'EE'
@@ -31,13 +35,17 @@ classdef InverseSolver < handle
         function [As, hist, cost, Ahist] = solve(is)
             f = @(A) is.obj.evaluate(A);
 
-            CheckGrad( f, is.A0, 6 );
+            CheckGrad( f, is.A0, 8 );
 
             [As, hist, cost, Ahist] = cgtrust1(is.A0, f, [is.tol, 0.1, 500, 500]);
 
+            %[As, hist, cost, Ahist] = cgtrust1(is.A0, f, is.tol);
+
+            %[As, hist, cost] = bfgswopt(is.A0, f, is.tol,100000);
+            %Ahist = 0;
             % [As, hist, cost] = gradproj(is.A0, f, 3 * ones(is.ds.dof,1),...
-            %                             2* ones(is.ds.dof, 1), is.tol, 1E5);
-            % Ahist = 0;
+            %                              1* ones(is.ds.dof, 1), is.tol, 1E5);
+            %Ahist = 0;
         end
     end
 

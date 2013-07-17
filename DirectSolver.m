@@ -34,6 +34,7 @@ classdef DirectSolver < handle
         Fp
         Fn
         regType    % Regularization type        
+        Mh
     end
     methods
         function ds = DirectSolver( mesh, mu, ld, fx, fy, mfu, mfd, mfp, mim,... 
@@ -130,6 +131,7 @@ classdef DirectSolver < handle
             ds.Mp = gf_asm('mass_matrix', mim, mfu);
             ds.M = ds.Q' * ds.Mp * ds.Q;
 
+            ds.Mh = gf_asm('mass_matrix', mim, mfp);
 
             switch ds.regType
             case 'L2'
@@ -149,9 +151,9 @@ classdef DirectSolver < handle
 
           end
         function Ut = solve(ds)
-          %UP = ds.K \ ds.F;
+          UP = ds.K \ ds.F;
 
-          UP =gf_linsolve('superlu', ds.K, ds.F );
+          %UP =gf_linsolve('superlu', ds.K, ds.F );
 
           Ut = UP(1:size(ds.A,1), 1);
           P = UP((size(ds.A,1) + 1):size(UP,1));
@@ -195,8 +197,8 @@ classdef DirectSolver < handle
                       ' +t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/2;',...
                       'M$1(#1,#1)+=sym(e(:,i,j,:,i,j,k).m(k));' ], ...
                       ds.mim, ds.mfu, ds.mfd, phi );
-              %Kphi{i} = [Aphi, ds.Bp; ds.Bp', ds.C];
-              Kphi{i} = Aphi;
+              Kphi{i} = [ ds.Q'* Aphi*ds.Q, ds.B; ds.B', ds.C];
+              %Kphi{i} = Aphi;
           end
         end
 

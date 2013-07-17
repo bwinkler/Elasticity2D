@@ -1,19 +1,34 @@
-example1_setup
 
-noisePercent = 0.01;
+N = 1;
+trialsMOLS = zeros(1,N);
+for i = [1:N]
+
+for n = [10 20 30 40 50 60 70 80]
+  n
+example1_setup
+%noisePercent = 0.01;
 
 zExact = Zt(1:ds.udof);
 pExact = Zt(ds.udof + 1: length(Zt));
 
-[zNoise, errNorm] = addNoise( ds.Q' * zExact, noisePercent, 'uniform' );
+%[zNoise, errNorm] = addNoise( ds.Q' * zExact, noisePercent, 'uniform' );
 
-zNoise = ds.Q * zNoise + ds.U0';
+%zNoise = ds.Q * zNoise + ds.U0';
 
 
 % Use exact data
+% Z = [zExact; pExact];
+% eps = 1E-8;
+
+% Use estimate
 pEst = estimateP(ds, zExact );
 Z = [zExact; pEst];
-eps = 1E-8;
+eps = 1E-6;
+
+% Use interpolated
+% pEst = estimateP(ds, zInterp );
+% Z = [zInterp; pEst];
+% eps = 1E-6;
 
 % Use noise data directly
 % pEst = estimateP(ds, zNoise );
@@ -26,25 +41,38 @@ eps = 1E-8;
 % zSmooth = smoothData1( zNoise, alpha, ds );
 % pEst = estimateP(ds, zSmooth);
 % Z = [zSmooth; pEst];
-%norm( zExact - zSmooth)
 %dispDisplacementComparison( ds, zNoise', zSmooth', 1);
 %eps = 2E-3;
 
-%return 
+% norm( zExact - zInterp)
+% dispDisplacementComparison( ds, zExact', zInterp', 1);
+% return 
+
 A0 = gf_mesh_fem_get(mfd, 'eval', {1} );
+%A0 = A0 + rand(size(A0));
 muExact = ds.mVec;
 
 disp('Starting inverse solver...');
 %profile on;
-is = InverseSolver( ds, A0', Z, eps, 'MOLS', 'Adjoint Stiffness');
-[muComp, hist, cost, muHist] = is.solve();
+is = InverseSolver( ds, A0', Z, eps, 'MOLSJ2', 'Adjoint Stiffness');
+[muComp, histMOLS, costMOLS, muHistMOLS] = is.solve();
 %profile off;
 
 %profsave( profile('info'), mfilename() );
 
-disp(sprintf('\n%d optimization iterations\n', size(hist,1) ));
+disp(sprintf('\n%d optimization iterations\n', size(histMOLS,1) ));
 
+%trialsMOLS(i) = norm(muExact - muComp');
+
+%mean(trialsMOLS)
+%save('trialsMOLS.mat', 'trialsMOLS')
 dispMuComparison( ds, muExact, muComp');
 
 %printMuComparison(ds, muExact, muComp', mfilename(), [2.2, 2.8] );
 
+%printMuComparison(ds, muExact, muComp', muHistMOLS, [2,5,8], mfilename(), [2.2,2.8]);
+
+%printMuComparisonCombined(ds, muExact, muComp', mfilename(), [2.2, 2.8] );
+
+end
+end

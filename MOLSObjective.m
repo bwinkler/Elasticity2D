@@ -65,6 +65,9 @@ classdef MOLSObjective < handle
               % Second trilinear form
               L = ds.getAdjointStiffness(up + zp); 
               Ga = -0.5* L' * (up - zp);
+              %Lu = ds.getAdjointStiffness(up);
+              %Lz = ds.getAdjointStiffness(zp);
+              %Ga = -0.5 * Lu' * up + 0.5 * Lz' * zp;
             end
 
             if strcmp(ds.regType, 'BV')

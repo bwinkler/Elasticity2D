@@ -1,12 +1,12 @@
 clear all;
 gf_workspace('clear all');
-warning off;
+%warning off;
 
 % Create the mesh
-n = 20;
+n = 148;
 h = 1/(n+1);
 m = gf_mesh('cartesian', [0:h:1], [0:h:1] );
-
+%m = gf_mesh('triangles grid', [0:h:1], [0:h:1] );
 
 pts = gf_mesh_get(m,'pts');
 pidleft = find( abs(pts(1,:) ) < 1/(2*(n+1)) );
@@ -32,10 +32,20 @@ gf_mesh_fem_set(mfd, 'fem', gf_fem('FEM_QK(2,1)'));
 
 mfp = gf_mesh_fem(m);
 gf_mesh_fem_set(mfp, 'fem', gf_fem('FEM_QK(2,0)'));
+mim = gf_mesh_im(m, gf_integ('IM_QUAD(2)'));
 
-mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,2)'));
+% mfu = gf_mesh_fem(m,2);
+% gf_mesh_fem_set(mfu, 'fem',gf_fem('FEM_PK(2,2)'));
 
-mu = '1+x.*y.*sin(pi*x).*sin(pi*y)';
+% mfd = gf_mesh_fem(m);
+% gf_mesh_fem_set(mfd, 'fem', gf_fem('FEM_PK(2,1)'));
+
+% mfp = gf_mesh_fem(m);
+% gf_mesh_fem_set(mfp, 'fem', gf_fem('FEM_PK(2,0)'));
+% mim = gf_mesh_im(m, gf_integ('IM_TRIANGLE(2)'));
+
+%mu = '1+x.*y.*cos(-0.5*pi+2*x).*cos(-0.5*pi+2*y)';
+mu = '1-0.5*sinc(2*pi*(x+0.1).*(y+0.1))';
 
 ld = 1E6;
 

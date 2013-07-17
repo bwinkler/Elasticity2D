@@ -2,7 +2,7 @@ clear all;
 gf_workspace('clear all');
 
 % Create the mesh
-n = 20;
+n = 73;
 h = 1/(n+1);
 m = gf_mesh('cartesian', [0:h:1], [0:h:1] );
 %gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');

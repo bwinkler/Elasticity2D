@@ -3,7 +3,7 @@ gf_workspace('clear all');
 warning off;
 
 % Create the mesh
-n = 20;
+n = 50;
 h = 1/(n+1);
 m = gf_mesh('cartesian', [0:h:1], [0:h:1] );
 
@@ -14,8 +14,7 @@ pidbottom = find( abs(pts(2,:) ) < 1/(2*(n+1)) );
 pidtop = find( abs(pts(2,:) - 1 ) < 1/(2*(n+1)) );
 
 dirBoundFaces = gf_mesh_get(m, 'faces_from_pid', pidtop );
-neuBoundFaces = gf_mesh_get(m, 'faces_from_pid',...
-                  union( pidleft, union(pidright, pidbottom) ) );
+neuBoundFaces = gf_mesh_get(m, 'faces_from_pid', union(pidleft, union( pidright, pidbottom)) );
 
 dirBoundID = 1;
 neuBoundID = 2;
@@ -36,22 +35,35 @@ gf_mesh_fem_set(mfp, 'fem', gf_fem('FEM_QK(2,0)'));
 mim = gf_mesh_im(m, gf_integ('IM_QUAD(2)'));
 
 %mu = '2.5+0.25*sin(2*pi*x)';
-mu = '1+x.*y.*sin(pi*x).*sin(pi*y)';
+%mu = '1+ 0.1*exp(sin(pi*x.^2) .* cos(pi*y.^2) +1)';
+
+mu = '(1 - 0.12*cos(3*pi*sqrt((x.*x + y.*y))  )).^(-1)';
+
+%mu = '2.5 + x.*sin(pi*y).*sin(pi*x)';
 ld = 1E6;
 
 % For totally incompressible case.
 %ld = 'Incompressible';
 
-f1 = '2.3+0.1*x';
-f2 = '2.3+0.1*y';
+% f1 = '1.3+0.1*x';
+% f2 = '1.3+0.1*y';
+
+
+% dirBound1 = '0';
+% dirBound2 = '.1*x.*y.^2';
+
+% neuBound1 = 'x.^2';
+% neuBound2 = 'y.^2';
+
+f1 = '1+0.1*x.*x';
+f2 = '0.1*y';
 
 
 dirBound1 = '0';
 dirBound2 = '0';
 
-neuBound1 = '1';
-neuBound2 = '1';
-
+neuBound1 = '0.5*1+x.^2';
+neuBound2 = '0';
 
 disp('Starting direct solver...');
 tic
